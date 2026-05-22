@@ -8,13 +8,37 @@ datasource db {
   provider = "postgresql"
 }
 
+// --- ENUMS ---
+enum RoleType {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MediaType {
+  TEXT
+  AUDIO
+  VIDEO
+}
+
+enum ProcessingStatus {
+  DRAFT
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// --- MODELS ---
+
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
   fullName  String
   createdAt DateTime @default(now())
 
-  workspaces WorkspaceMember[]
+  workspaces   WorkspaceMember[]
+  teams        TeamMember[]
+  standups     Standup[]
 }
 
 model Workspace {
@@ -23,17 +47,80 @@ model Workspace {
   createdAt DateTime @default(now())
 
   members   WorkspaceMember[]
+  teams     Team[]
+  standups  Standup[]
+  blockers  Blocker[]
 }
 
 model WorkspaceMember {
-  id          String    @id @default(uuid()) @db.Uuid
-  workspaceId String    @db.Uuid
-  userId      String    @db.Uuid
-  role        String    @default("MEMBER")
-  createdAt   DateTime  @default(now())
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  userId      String   @db.Uuid
+  role        RoleType @default(MEMBER)
+  createdAt   DateTime @default(now())
 
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
+}
+
+model Team {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+  standups    Standup[]
+}
+
+model TeamMember {
+  teamId String @db.Uuid
+  userId String @db.Uuid
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+}
+
+model Standup {
+  id          String           @id @default(uuid()) @db.Uuid
+  workspaceId String           @db.Uuid
+  teamId      String           @db.Uuid
+  userId      String           @db.Uuid
+  
+  targetDate  DateTime         @default(now()) @db.Date
+  type        MediaType        @default(TEXT)
+  status      ProcessingStatus @default(COMPLETED)
+  
+  mediaUrl    String?          // AWS S3 Presigned URL
+  transcript  String?          @db.Text
+  aiSummary   String?          @db.Text
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blockers    Blocker[]
+
+  @@unique([teamId, userId, targetDate])
+  @@index([workspaceId, targetDate])
+  @@index([status])
+}
+
+model Blocker {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  standupId   String   @db.Uuid
+  description String   @db.Text
+  isResolved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  standup     Standup   @relation(fields: [standupId], references: [id], onDelete: Cascade)
 }
