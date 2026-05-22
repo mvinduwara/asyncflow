@@ -1,10 +1,9 @@
-// apps/backend/src/prisma/prisma.module.ts
 import { Global, Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 @Global()
 @Module({
   providers: [PrismaService],
-  exports: [PrismaService], // Export it so Standups and App modules can use it
+  exports: [PrismaService],
 })
 export class PrismaModule {}
