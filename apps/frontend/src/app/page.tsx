@@ -1,11 +1,9 @@
-// apps/frontend/src/app/page.tsx
 import React from 'react';
 import StandupForm from '../components/StandupForm';
 
-// 🛑 PASTE YOUR SEED IDs HERE:
-const USER_ID = "PASTE_YOUR_USER_ID_HERE";
-const WORKSPACE_ID = "PASTE_YOUR_WORKSPACE_ID_HERE";
-const TEAM_ID = "PASTE_YOUR_TEAM_ID_HERE";
+const USER_ID = "a1b2c3d4-1234-5678-abcd-1234567890ab"; 
+const WORKSPACE_ID = "e5f6g7h8-1234-5678-abcd-1234567890ab"; 
+const TEAM_ID = "i9j0k1l2-1234-5678-abcd-1234567890ab"; 
 
 async function getStandups() {
   try {
@@ -49,7 +47,6 @@ export default async function Dashboard() {
           teamId={TEAM_ID} 
         />
 
-        {/* 2. Render the feed of standups */}
         <h2 className="text-xl font-bold mb-4">Team Updates</h2>
         {standups.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
